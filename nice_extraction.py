@@ -2,6 +2,7 @@ import duckdb
 import sqlite3
 import json
 
+
 def extract_simple_values(complex_value):
     """Extract useful values from complex nested structures"""
     if complex_value is None:
@@ -41,6 +42,7 @@ def extract_simple_values(complex_value):
             return '; '.join(str(v) for v in complex_value.values() if v)
 
     return str(complex_value)
+
 
 def clean_biological_data():
     """Clean your biological network database"""
