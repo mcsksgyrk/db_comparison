@@ -2,6 +2,7 @@ import duckdb
 from config import OUTPUT_DIR, SOURCE_DIR
 import os
 import json
+from typing import List
 
 
 def query_executor(conn):
@@ -11,6 +12,13 @@ def query_executor(conn):
         """)
     except Exception as e:
         print(f"Error: {e}")
+
+
+def tissue_extractor(tissues_struct: List[dict]) -> List[str]:
+    tissues = []
+    for tissue in tissues_struct:
+        tissues.append(tissue['value'])
+    return tissues
 
 
 source_db = OUTPUT_DIR / 'rawdata.duckdb'
@@ -40,6 +48,9 @@ conn.execute("""
 
 # gets all core autophagy proteins
 conn.execute("""
-    SELECT * FROM nodes
+    SELECT name, tissues FROM nodes
     WHERE len(autophagyPhase) > 0;
 """)
+aut_coore = conn.fetchall()
+test = aut_coore[0]
+print(tissue_extractor(test[1]))
