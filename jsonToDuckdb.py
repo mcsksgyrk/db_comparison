@@ -13,7 +13,7 @@ for file in files:
     else:
         print(f"{path}: NOT FOUND")
 
-output_db = OUTPUT_DIR / 'rawdata.duckdb'
+output_db = OUTPUT_DIR / 'ARN.duckdb'
 conn = duckdb.connect(output_db)
 try:
     print("Loading attributes...")
