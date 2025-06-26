@@ -37,16 +37,16 @@ class DuckdbAPI:
     def inser_node(self, node_dict: Dict) -> None:
         query = """
                 INSERT INTO node
-                (name, display_name, primary_id_type, tax_id, type, pathways, source, function)
+                (name, display_name, tax_id, type, pathways, source, function, source_database)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """
         self.db.execute(query, (
                 node_dict['name'],
                 node_dict.get('display_name', ''),
-                node_dict.get('primary_id_type'),
                 node_dict.get('tax_id', '9606'),
                 node_dict.get('type', 'protein'),
-                node_dict.get('pathways', ''),
+                node_dict.get('pathways', []),
                 node_dict.get('source', ''),
-                node_dict.get('function', '')
+                node_dict.get('function', []),
+                node_dict.get('source_database', '')
                 ))

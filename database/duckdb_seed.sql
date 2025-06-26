@@ -1,24 +1,26 @@
 DROP TABLE IF EXISTS node;
 DROP TABLE IF EXISTS edge;
-DROP TABLE IF EXISTS node_identifier;
 DROP TABLE IF EXISTS tissue;
 DROP TABLE IF EXISTS node_tissue;
 
+CREATE SEQUENCE node_id_seq START 1;
+CREATE SEQUENCE tissue_id_seq START 1;
+CREATE SEQUENCE edge_id_seq START 1;
 
 CREATE TABLE node (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY DEFAULT nextval('node_id_seq'),
     name TEXT NOT NULL,
     display_name TEXT NOT NULL,
     tax_id INTEGER,
     type TEXT NOT NULL DEFAULT 'protein',
-    pathways TEXT,
+    pathways TEXT[],
     source TEXT,
-    function TEXT,
-    source_database TEXT
+    function TEXT[],
+    source_database TEXT NOT NULL -- ferroptosisNet or ARN
 );
 
 CREATE TABLE tissue (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY DEFAULT nextval('tissue_id_seq'),
     tissue_id TEXT NOT NULL UNIQUE,
     ontology TEXT NOT NULL,
     name TEXT NOT NULL,
@@ -34,7 +36,7 @@ CREATE TABLE node_tissue (
 );
 
 CREATE TABLE edge (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY DEFAULT nextval('edge_id_seq'),
     interactor_a_node_id INTEGER NOT NULL,
     interactor_b_node_id INTEGER NOT NULL,
     interactor_a_node_name TEXT NOT NULL,
