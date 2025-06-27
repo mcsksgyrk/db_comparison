@@ -50,3 +50,11 @@ class DuckdbAPI:
                 node_dict.get('function', []),
                 node_dict.get('source_database', '')
                 ))
+
+        #def save_db_to_file(self, end_db_path: Path) -> None:
+        #    self.db.execute(f"ATTACH '{end_db_path}' AS file_db")
+        #    self.db.execute("COPY FROM DATABASE memory TO file_db")
+        #    self.db.execute("DETACH file_db")
+
+    def close_db(self) -> None:
+        self.db.close()
