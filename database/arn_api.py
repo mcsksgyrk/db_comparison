@@ -68,3 +68,6 @@ class ArnAPI:
             """
         res = self._execute_as_dict(query, (layer,))
         return res
+
+    def close(self) -> None:
+        self.db.close()
