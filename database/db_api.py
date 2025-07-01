@@ -96,5 +96,8 @@ class DuckdbAPI:
 
         self.db.execute(query, tup)
 
+    def modifiy_node(self, node_dict):
+        return None
+
     def close(self) -> None:
         self.db.close()
