@@ -6,16 +6,16 @@ from typing import Optional, List, Any, Dict, Set
 class DuckdbAPI:
     def __init__(self,
                  sql_seed: Path,
-                 db_path: Optional[Path] = None):
-#                 create_new: bool = True):
+                 db_path: Optional[Path] = None,
+                 create_new: bool = True):
         self.sql_seed = open(sql_seed).read()
 
         if db_path:
             self.db = duckdb.connect(str(db_path))
         else:
             self.db = duckdb.connect()
-#        if create_new:
-        self.create_schema()
+        if create_new:
+            self.create_schema()
 
     def create_schema(self) -> None:
         if self.sql_seed:
@@ -96,8 +96,45 @@ class DuckdbAPI:
 
         self.db.execute(query, tup)
 
-    def modifiy_node(self, node_dict):
-        return None
+    def update_existing_node(self, node_id: int, node_dict: Dict) -> None:
+        existing_node = self.get_node_by_id(node_dict['name'])
+
+        updates = {}
+        for field, new_value in node_dict.items():
+            if field in ['id', 'name', 'tax_id']:
+                continue
+
+            old_value = existing_node.get(field, '')
+            if isinstance(new_value, list) and isinstance(old_value, list):
+                merged = list(set(old_value + new_value))
+                if merged != old_value:
+                    updates[field] = merged
+            elif isinstance(new_value, str) and isinstance(old_value, str):
+                if old_value and new_value and new_value not in old_value:
+                    merged = f"{old_value}|{new_value}"
+                    updates[field] = merged
+                elif not old_value and new_value:
+                    updates[field] = new_value
+
+            if not updates:
+                return None
+
+        set_clauses = [f"{field} = ?" for field in updates.keys()]
+        values = list(updates.values()) + [node_id]
+        query = f"""
+                UPDATE node
+                SET {', '.join(set_clauses)}
+                WHERE id = ?
+                """
+        self.db.execute(query, values)
+
+    def insert_or_update_node(self, node_dict: Dict) -> int:
+        existing_node = self.get_node_by_id(node_dict['name'])
+        if existing_node:
+            self.update_existing_node(existing_node['id'], node_dict)
+            return existing_node['id']
+        else:
+            self.inser_node(node_dict)
 
     def close(self) -> None:
         self.db.close()

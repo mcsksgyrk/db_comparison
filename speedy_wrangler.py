@@ -45,7 +45,7 @@ for edge in protein_edges:
         interactor_a_dict['id'] = source_res['id']
         interactor_b_dict['id'] = target_res['id']
         interactor_a_dict['name'] = source_res['name']
-        interactor_b_dict['name'] = source_res['name']
+        interactor_b_dict['name'] = target_res['name']
 
         edge_dict['layer'] = edge['layer']
         edge_dict['interaction_types'] = ''
