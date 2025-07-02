@@ -35,21 +35,22 @@ for node in list(all_nodes):
 
 for edge in protein_edges:
     try:
-        interactor_a_dict = {}
-        interactor_b_dict = {}
-        edge_dict = {}
-
         source_res = db_end.get_node_by_id(edge['source'])
         target_res = db_end.get_node_by_id(edge['target'])
 
-        interactor_a_dict['id'] = source_res['id']
-        interactor_b_dict['id'] = target_res['id']
-        interactor_a_dict['name'] = source_res['name']
-        interactor_b_dict['name'] = target_res['name']
-
-        edge_dict['layer'] = edge['layer']
-        edge_dict['interaction_types'] = ''
-        edge_dict['source_db'] = 'ARN'
+        interactor_a_dict = {
+            'id': source_res['id'],
+            'name': source_res['name']
+        }
+        interactor_b_dict = {
+                'id': target_res['id'],
+                'name': target_res['name']
+        }
+        edge_dict = {
+            'layer': edge['layer'],
+            'interaction_types': '',
+            'source_db': 'ARN'
+        }
 
         db_end.insert_edge(interactor_a_dict, interactor_b_dict, edge_dict)
     except Exception as e:

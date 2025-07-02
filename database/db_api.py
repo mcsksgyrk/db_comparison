@@ -118,15 +118,18 @@ class DuckdbAPI:
 
             if not updates:
                 return None
+        try:
 
-        set_clauses = [f"{field} = ?" for field in updates.keys()]
-        values = list(updates.values()) + [node_id]
-        query = f"""
-                UPDATE node
-                SET {', '.join(set_clauses)}
-                WHERE id = ?
-                """
-        self.db.execute(query, values)
+            set_clauses = [f"{field} = ?" for field in updates.keys()]
+            values = list(updates.values()) + [node_id]
+            query = f"""
+                    UPDATE node
+                    SET {', '.join(set_clauses)}
+                    WHERE id = ?
+                    """
+            self.db.execute(query, values)
+        except Exception as e:
+            print(f"failed to update {existing_node} with {node_dict}: {e}")
 
     def insert_or_update_node(self, node_dict: Dict) -> int:
         existing_node = self.get_node_by_id(node_dict['name'])
