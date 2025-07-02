@@ -34,8 +34,17 @@ all_node_dict = df_ferr.to_dict('records')
 
 sql_seed = PROJECT_ROOT / 'database' / 'duckdb_seed.sql'
 output_db = OUTPUT_DIR / 'testing.duckdb'
-db_end = DuckdbAPI(sql_seed, output_db, False)
+db_arn_data = DuckdbAPI(sql_seed, output_db, False)
+db_end = DuckdbAPI(sql_seed)
+db_end.db.execute(f"ATTACH '{output_db}' AS source_db")
+db_end.db.execute("INSERT INTO 'node' SELECT * FROM source_db.node")
+db_end.db.execute("SELECT * FROM node").fetchall()
+
 for node in all_node_dict:
     print(node['name'])
     db_end.insert_or_update_node(node)
+db_arn_data.close()
 db_end.close()
+# Clear any variables that might conflict
+if 'node' in locals():
+    del node

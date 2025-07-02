@@ -116,20 +116,39 @@ class DuckdbAPI:
                 elif not old_value and new_value:
                     updates[field] = new_value
 
-            if not updates:
-                return None
-        try:
+        if not updates:
+            return None
 
-            set_clauses = [f"{field} = ?" for field in updates.keys()]
-            values = list(updates.values()) + [node_id]
-            query = f"""
-                    UPDATE node
-                    SET {', '.join(set_clauses)}
-                    WHERE id = ?
-                    """
-            self.db.execute(query, values)
+        try:
+            self.db.execute("BEGIN TRANSACTION")
+
+            update_query = """
+                UPDATE node SET
+                    display_name = ?,
+                    tax_id = ?,
+                    type = ?,
+                    pathways = ?,
+                    source = ?,
+                    function = ?,
+                    source_database = ?
+                WHERE id = ?
+            """
+            self.db.execute(update_query, (
+                updates.get('display_name', existing_node.get('display_name', '')),
+                updates.get('tax_id', existing_node.get('tax_id', '9606')),
+                updates.get('type', existing_node.get('type', 'protein')),
+                updates.get('pathways', existing_node.get('pathways', [])),
+                updates.get('source', existing_node.get('source', '')),
+                updates.get('function', existing_node.get('function', [])),
+                updates.get('source_database', existing_node.get('source_database', '')),
+                node_id
+            ))
+
+            self.db.execute("COMMIT")
         except Exception as e:
-            print(f"failed to update {existing_node} with {node_dict}: {e}")
+            self.db.execute("ROLLBACK")
+            print(f"Failed to update node {node_id}: {e}")
+            raise e
 
     def insert_or_update_node(self, node_dict: Dict) -> int:
         existing_node = self.get_node_by_id(node_dict['name'])
