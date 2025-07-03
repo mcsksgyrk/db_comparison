@@ -21,19 +21,11 @@ class DuckdbAPI:
         if self.sql_seed:
             self.db.execute(self.sql_seed)
 
-    def read_existing_db(self, existing_db_path: Path) -> None:
+    def read_existing_table(self, existing_db_path: Path, table: str) -> None:
         try:
             self.db.execute(f"ATTACH '{existing_db_path}' AS source_db")
-            self.db.execute("ATTACH INTO edges SELECT * FROM source_db.edges")
-            self.db.execute("ATTACH INTO nodes SELECT * FROM source_db.nodes")
-            try:
-                self.db.execute("ATTACH INTO tissue SELECT * FROM source_db.tissue")
-            except Exception:
-                pass
-            try:
-                self.db.execute("ATTACH INTO node_tissue SELECT * FROM source_db.node_tissue")
-            except Exception:
-                pass
+            self.db.execute(f"INSERT INTO {table} SELECT * FROM source_db.{table}")
+            self.db.execute("DETACH source_db")
         except Exception as e:
             print(f"failed to import db {e}")
             raise
