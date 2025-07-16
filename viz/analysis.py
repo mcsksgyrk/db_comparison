@@ -39,7 +39,7 @@ go_libs = [lib for lib in libs if 'GO_Biological_Process' in lib]
 
 for pathway, data in gene_sets.items():
     enrich = gp.enrichr(gene_list=list(data['gene_names']),
-                        gene_sets=go_libs,
+                        gene_sets='Reactome_Pathways_2024',
                         organism='human',
                         background=None)
 
@@ -59,4 +59,13 @@ for i in range(len(gene_sets.keys())):
 
         intersections[key] = check_term_overlap(terms1, terms2)
 
-intersections['ARN&ferr']
+# ferr and ARN groups no same term
+# common and arn 45
+# common and ferr 220
+for k, v in intersections.items():
+    print(f"{k} have {len(v)} many common functions")
+
+intersect_of_intersects = check_term_overlap(set(intersections['ARN&ARN|ferr']),
+                                             set(intersections['ARN|ferr&ferr']))
+intersect_of_intersects
+set(intersections['ARN&ferr']) & set(intersect_of_intersects)
