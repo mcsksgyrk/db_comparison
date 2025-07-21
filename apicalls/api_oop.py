@@ -24,6 +24,26 @@ class APIClient:
         return response
 
 
+class BGEE(APIClient):
+    def __init__(self):
+        super().__init__("https://www.bgee.org/api/")
+
+    def expression_data_call(self, gene_ids: List[str], species_id=9606):
+        params = {
+            "display_type": "json",
+            "page": "data",
+            "action": "expr_calls",
+            "gene_id": gene_ids,
+            "species_id": species_id,
+            "cond_param": ["anat_entity", "cell_type"],
+            "data_type": "all",
+            "get_results": "true",
+        }
+        res = self._make_request("GET", "/gene/expression", params=params)
+
+        return res.json()
+
+
 class PubChemClient(APIClient):
     def __init__(self):
         super().__init__("https://pubchem.ncbi.nlm.nih.gov/rest/pug")
