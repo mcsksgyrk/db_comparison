@@ -1,6 +1,7 @@
 import requests
 import time
 import re
+import traceback
 from typing import List, Dict, Union, TypedDict
 
 
@@ -29,7 +30,7 @@ class BGEEClient(APIClient):
     def __init__(self):
         super().__init__("https://www.bgee.org/api/")
 
-    def expression_data_call(self, gene_id: str, species_id=9606) -> Dict:
+    def _expression_data_call(self, gene_id: str, species_id=9606) -> Dict:
         params = {
             "display_type": "json",
             "page": "data",
@@ -43,6 +44,22 @@ class BGEEClient(APIClient):
         res = self._make_request("GET", "/gene/expression", params=params)
 
         return res.json()
+
+    def _get_anatEntity(self, expressionCalls: List[Dict]) -> Dict:
+        gene_entity_dict = dict()
+        for cal in expressionCalls:
+            gene = cal['gene']['geneId']
+            anat_id = cal['condition']['anatEntity']['id']
+            if gene in gene_entity_dict.keys():
+                gene_entity_dict[gene].append(anat_id)
+            else:
+                gene_entity_dict.setdefault(gene, []).append(anat_id)
+        return gene_entity_dict
+
+    def get_expression_anat_entity(self, gene_id, species_id=9606):
+        res = self._expression_data_call(gene_id, species_id)
+        expressionCalls = res['data']['expressionData']['expressionCalls']
+        return self._get_anatEntity(expressionCalls)
 
 
 class PubChemClient(APIClient):
@@ -121,14 +138,6 @@ class UniProtClient(APIClient):
             human=human
         )
 
-    def convert_from_uniprot_id(self, db: str, ids: List[str], human: bool = True) -> tuple[Dict, List]:
-        return self._execute_id_mapping(
-            from_db="UniProtKB_AC-ID",
-            to_db=db,
-            ids=ids,
-            human=human
-        )
-
     def batch_convert_from_uniprot_id(self, db: str, ids: List[str], batch_size: int = 100) -> tuple[Dict, List]:
         results_dict = {}
         failed_ids = []
@@ -139,15 +148,17 @@ class UniProtClient(APIClient):
                 job_id = self._submit_id_mapping("UniProtKB_AC-ID", db, batch, human=False)
                 print(job_id)
                 results = self._get_id_mapping_results(job_id)
-                print(results)
                 for result in results.get('results', []):
                     from_id = result['from']
-                    to_id = result['to']
+                    if 'ensembl' in db.lower():
+                        to_id = result['to'].split('.')[0]
+                    else:
+                        to_id = result['to']
                     results_dict[from_id] = to_id
+                    print(f"from: {from_id}, to: {to_id}")
             except Exception as e:
                 print(f"ERROR: {e}")
                 print(f"Error type: {type(e)}")
-                import traceback
                 traceback.print_exc()
                 failed_ids.extend(batch)
         return results_dict, failed_ids
@@ -307,7 +318,8 @@ class GOClient(APIClient):
             'query': term_name,
             'page': 1,
             'limit': 1,
-            'exact': True          }
+            'exact': True
+        }
         headers = {'Accept': 'application/json'}
 
         response = self._make_request("GET",
@@ -326,31 +338,3 @@ class GOClient(APIClient):
         else:
             print(f"Error: {response.status_code}")
         return go_dict
-
-
-bgee = BGEEClient()
-genes = ["ENSG00000036828", "ENSG00000141510", "ENSG00000012048"]
-solo = ["ENSG00000141510"]
-res = []
-for gene in genes:
-    res.append(bgee.expression_data_call([gene]))
-res
-
-
-def get_anatEntity(expressionCalls: List[Dict]) -> Dict:
-    gene_entity_dict = dict()
-    for cal in expressionCalls:
-        gene = cal['gene']['geneId']
-        anat_id = cal['condition']['anatEntity']['id']
-        if gene in gene_entity_dict.keys():
-            gene_entity_dict[gene].append(anat_id)
-        else:
-            gene_entity_dict.setdefault(gene, []).append(anat_id)
-    return gene_entity_dict
-
-
-type(res['data']['expressionData'])
-res['data']['expressionData']['expressionCalls']
-res['data']['expressionData']['expressionCalls']
-get_anatEntity(res['data']['expressionData']['expressionCalls'])
-

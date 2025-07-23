@@ -31,6 +31,7 @@ def get_core_fer_proteins(ferr_path: Path) -> List[str]:
             """
     curs.execute(query)
     res = curs.fetchall()
+    conn.close()
     return [val[0] for val in res]
 
 
@@ -40,7 +41,7 @@ fer_path = PROJECT_ROOT / 'test_omnipath.db'
 
 arn_core = set(get_core_arn_proteins(arn_path))
 fer_core = set(get_core_fer_proteins(fer_path))
-arn_core & fer_core
+common_core = arn_core & fer_core
 db = duckdb.connect(db_path)
 sources = ['ARN', 'ferr', 'ARN|ferr']
 group_members = []
@@ -97,3 +98,30 @@ shared_regulator_edges = edges_df[
 ]
 
 db.close()
+
+from apicalls.api_oop import BGEEClient, UniProtClient
+
+target_localisations = {
+    'dendritic_cell': 'CL:0000451',
+    'macrophage': 'CL:0000235',
+    'fibroblast': 'CL:0000057',
+    't_cell': 'CL:0000084',
+    'epithelial_cell': 'CL:0000066'
+}
+uniprot = UniProtClient()
+bgee = BGEEClient()
+anat_loc_dicts = dict()
+for pr in common_core:
+    ensembl_id, _ = uniprot.batch_convert_from_uniprot_id("Ensembl", [pr])
+    res = bgee.get_expression_anat_entity(ensembl_id[pr])
+    anat_loc_dicts[pr] = {
+        'ensembl_id': ensembl_id[pr],
+        'anatEntity': res[ensembl_id[pr]]
+    }
+
+target_uberon_ids = set(target_localisations.values())
+test = {'UBERON:0000059', 'CL:0000039', 'CL:0000039'}
+for k, v in anat_loc_dicts.items():
+    print(set(v['anatEntity']) & test)
+
+anat_loc_dicts['A6NCE7']
