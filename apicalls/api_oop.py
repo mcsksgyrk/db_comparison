@@ -21,19 +21,20 @@ class APIClient:
         url = f"{self.base_url}/{endpoint}"
         response = self.session.request(method, url, **kwargs)
         response.raise_for_status()
+        print("Actual URL:", response.url)
         return response
 
 
-class BGEE(APIClient):
+class BGEEClient(APIClient):
     def __init__(self):
         super().__init__("https://www.bgee.org/api/")
 
-    def expression_data_call(self, gene_ids: List[str], species_id=9606):
+    def expression_data_call(self, gene_id: str, species_id=9606) -> Dict:
         params = {
             "display_type": "json",
             "page": "data",
             "action": "expr_calls",
-            "gene_id": gene_ids,
+            "gene_id": gene_id,
             "species_id": species_id,
             "cond_param": ["anat_entity", "cell_type"],
             "data_type": "all",
@@ -325,3 +326,31 @@ class GOClient(APIClient):
         else:
             print(f"Error: {response.status_code}")
         return go_dict
+
+
+bgee = BGEEClient()
+genes = ["ENSG00000036828", "ENSG00000141510", "ENSG00000012048"]
+solo = ["ENSG00000141510"]
+res = []
+for gene in genes:
+    res.append(bgee.expression_data_call([gene]))
+res
+
+
+def get_anatEntity(expressionCalls: List[Dict]) -> Dict:
+    gene_entity_dict = dict()
+    for cal in expressionCalls:
+        gene = cal['gene']['geneId']
+        anat_id = cal['condition']['anatEntity']['id']
+        if gene in gene_entity_dict.keys():
+            gene_entity_dict[gene].append(anat_id)
+        else:
+            gene_entity_dict.setdefault(gene, []).append(anat_id)
+    return gene_entity_dict
+
+
+type(res['data']['expressionData'])
+res['data']['expressionData']['expressionCalls']
+res['data']['expressionData']['expressionCalls']
+get_anatEntity(res['data']['expressionData']['expressionCalls'])
+
