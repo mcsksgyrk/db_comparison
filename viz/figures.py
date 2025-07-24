@@ -4,7 +4,7 @@ import duckdb
 import sqlite3
 import pandas as pd
 from config import OUTPUT_DIR, PROJECT_ROOT
-from typing import List
+from typing import List, Dict, Set
 from pathlib import Path
 
 
@@ -33,6 +33,43 @@ def get_core_fer_proteins(ferr_path: Path) -> List[str]:
     res = curs.fetchall()
     conn.close()
     return [val[0] for val in res]
+
+
+def find_node_edges(node, edges_df, cond_set=None):
+    if cond_set is not None:
+        res = edges_df[
+            (edges_df.interactor_a_node_name == node) &
+            (edges_df.interactor_b_node_name.isin(cond_set))
+        ]
+    else:
+        res = edges_df[
+            (edges_df.interactor_a_node_name == node)
+        ]
+    return res
+
+
+def analyize_downstream_connectivity_nc(node_set: Set, edges_df: pd.DataFrame,
+                                        arn_core: Set, fer_core: Set) -> Dict:
+    shared_core = arn_core & fer_core
+    arn_only_core = arn_core - shared_core
+    fer_only_core = fer_core - shared_core
+    res = {}
+    for node in list(node_set):
+        arn_conn = len(find_node_edges(node, edges_df, arn_only_core))
+        fer_conn = len(find_node_edges(node, edges_df, fer_only_core))
+        shared_conn = len(find_node_edges(node, edges_df, shared_core))
+        all_conn = len(find_node_edges(node, edges_df))
+        score = arn_conn + fer_conn + shared_conn
+        crosstalk_score = min(arn_conn+shared_conn, fer_conn+shared_conn)
+        res[node] = {
+            'fer_conn': fer_conn,
+            'arn_conn': arn_conn,
+            'shared_conn': shared_conn,
+            'all_conn': all_conn,
+            'score': score,
+            'crosstalk_score': crosstalk_score
+        }
+    return res
 
 
 db_path = OUTPUT_DIR / 'test2.duckdb'
@@ -124,4 +161,34 @@ test = {'UBERON:0000059', 'CL:0000039', 'CL:0000039'}
 for k, v in anat_loc_dicts.items():
     print(set(v['anatEntity']) & test)
 
-anat_loc_dicts['A6NCE7']
+res = analyize_downstream_connectivity_nc(shared_regulators_set, edges_df,
+                                          arn_core, fer_core)
+
+df_upstream_reg = pd.DataFrame.from_dict(res, orient='index')
+nodes_to_analyze = df_upstream_reg[
+    (df_upstream_reg.crosstalk_score > 2) &
+    (df_upstream_reg.fer_conn > 0)
+].index.tolist()
+
+shared_core = arn_core & fer_core
+arn_only_core = arn_core - shared_core
+fer_only_core = fer_core - shared_core
+
+regulators = {}
+for node in nodes_to_analyze:
+    edges = find_node_edges(node, edges_df, fer_core | arn_core)
+
+    if node not in regulators:
+        regulators[node] = {'fer': [],
+                            'arn': [],
+                            'shared': []}
+
+    for idx, edge in edges.iterrows():
+        if edge.interactor_b_node_name in shared_core:
+            regulators[node]['shared'].append(edge.interactor_b_node_name)
+        elif edge.interactor_b_node_name in arn_only_core:
+            regulators[node]['arn'].append(edge.interactor_b_node_name)
+        elif edge.interactor_b_node_name in fer_only_core:
+            print(f"{edge.interactor_a_node_name} effects {edge.interactor_b_node_name}")
+            regulators[node]['fer'].append(edge.interactor_b_node_name)
+regulators
