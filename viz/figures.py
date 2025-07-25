@@ -201,4 +201,3 @@ import json
 target_pr_path = OUTPUT_DIR / "upstream_regulators.json"
 with open(target_pr_path, "w") as f:
     json.dump(regulators, f)
-
