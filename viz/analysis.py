@@ -4,6 +4,7 @@ from config import OUTPUT_DIR, PROJECT_ROOT
 from apicalls.api_oop import UniProtClient
 import matplotlib.pyplot as plt
 from typing import Set, List
+import json
 
 
 def check_term_overlap(pathway1: Set, pathway2: Set) -> List[str]:

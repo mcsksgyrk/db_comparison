@@ -136,30 +136,30 @@ shared_regulator_edges = edges_df[
 
 db.close()
 
-from apicalls.api_oop import BGEEClient, UniProtClient
-
-target_localisations = {
-    'dendritic_cell': 'CL:0000451',
-    'macrophage': 'CL:0000235',
-    'fibroblast': 'CL:0000057',
-    't_cell': 'CL:0000084',
-    'epithelial_cell': 'CL:0000066'
-}
-uniprot = UniProtClient()
-bgee = BGEEClient()
-anat_loc_dicts = dict()
-for pr in common_core:
-    ensembl_id, _ = uniprot.batch_convert_from_uniprot_id("Ensembl", [pr])
-    res = bgee.get_expression_anat_entity(ensembl_id[pr])
-    anat_loc_dicts[pr] = {
-        'ensembl_id': ensembl_id[pr],
-        'anatEntity': res[ensembl_id[pr]]
-    }
-
-target_uberon_ids = set(target_localisations.values())
-test = {'UBERON:0000059', 'CL:0000039', 'CL:0000039'}
-for k, v in anat_loc_dicts.items():
-    print(set(v['anatEntity']) & test)
+#from apicalls.api_oop import BGEEClient, UniProtClient
+#
+#target_localisations = {
+#    'dendritic_cell': 'CL:0000451',
+#    'macrophage': 'CL:0000235',
+#    'fibroblast': 'CL:0000057',
+#    't_cell': 'CL:0000084',
+#    'epithelial_cell': 'CL:0000066'
+#}
+#uniprot = UniProtClient()
+#bgee = BGEEClient()
+#anat_loc_dicts = dict()
+#for pr in common_core:
+#    ensembl_id, _ = uniprot.batch_convert_from_uniprot_id("Ensembl", [pr])
+#    res = bgee.get_expression_anat_entity(ensembl_id[pr])
+#    anat_loc_dicts[pr] = {
+#        'ensembl_id': ensembl_id[pr],
+#        'anatEntity': res[ensembl_id[pr]]
+#    }
+#
+#target_uberon_ids = set(target_localisations.values())
+#test = {'UBERON:0000059', 'CL:0000039', 'CL:0000039'}
+#for k, v in anat_loc_dicts.items():
+#    print(set(v['anatEntity']) & test)
 
 res = analyize_downstream_connectivity_nc(shared_regulators_set, edges_df,
                                           arn_core, fer_core)
@@ -191,4 +191,14 @@ for node in nodes_to_analyze:
         elif edge.interactor_b_node_name in fer_only_core:
             print(f"{edge.interactor_a_node_name} effects {edge.interactor_b_node_name}")
             regulators[node]['fer'].append(edge.interactor_b_node_name)
-regulators
+
+for node in regulators:
+    regulators[node]['fer'] = list(set(regulators[node]['fer']))
+    regulators[node]['arn'] = list(set(regulators[node]['arn']))
+    regulators[node]['shared'] = list(set(regulators[node]['shared']))
+
+import json
+target_pr_path = OUTPUT_DIR / "upstream_regulators.json"
+with open(target_pr_path, "w") as f:
+    json.dump(regulators, f)
+
