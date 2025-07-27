@@ -1,0 +1,4 @@
+ibd_term_count,total_disease_terms,ibd_proportion,ibd_avg_neg_log_pval,ibd_min_pval,ibd_max_neg_log_pval,all_disease_avg_neg_log_pval,relative_enrichment_score,source,ibd_terms
+0,27,0.0,0.0,1.0,0.0,1.6965295388942683,0.0,ARN,[]
+3,529,0.005671077504725898,2.412592088094731,0.0002896314212636988,3.5381543245840055,3.3338761019006866,0.7236597924917728,ferr,"['Colitis', 'Inflammatory Bowel Diseases', 'Ulcerative Colitis']"
+7,1125,0.006222222222222222,3.83752230375223,5.8328437464597595e-09,8.23411965754208,3.7761855559517654,1.01624304391075,ARN|ferr,"['Colitis', 'Inflammatory Bowel Diseases', 'Crohn Disease', 'Ulcerative Colitis', 'Necrotizing Enterocolitis', 'Necrotizing enterocolitis in fetus OR newborn', ""CROHN'S DISEASE""]"

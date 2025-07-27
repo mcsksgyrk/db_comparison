@@ -48,4 +48,3 @@ enrich = gp.enrichr(gene_list=list(gene_names_dict.values()),
 
 ax = gp.barplot(enrich.res2d,title='KEGG_2021_Human', figsize=(4, 5), color='darkred')
 plt.show()
-enrich.res2d

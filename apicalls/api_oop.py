@@ -22,7 +22,6 @@ class APIClient:
         url = f"{self.base_url}/{endpoint}"
         response = self.session.request(method, url, **kwargs)
         response.raise_for_status()
-        print("Actual URL:", response.url)
         return response
 
 
@@ -134,6 +133,15 @@ class UniProtClient(APIClient):
         return self._execute_id_mapping(
             from_db=db,
             to_db="UniProtKB-Swiss-Prot",
+            ids=ids,
+            human=human
+        )
+
+    def convert_from_uniprot_id(self, db: str, ids: List[str], human: bool = True) -> tuple[Dict, List]:
+        """Convert UniProt IDs to other database IDs."""
+        return self._execute_id_mapping(
+            from_db="UniProtKB_AC-ID",
+            to_db=db,
             ids=ids,
             human=human
         )
